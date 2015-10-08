@@ -4,6 +4,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.os.IBinder;
@@ -11,6 +12,7 @@ import android.os.Vibrator;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
+import android.view.Surface;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
@@ -50,8 +52,8 @@ public class ScreenShotService extends Service {
         container = new LinearLayout(this);
         container.setOrientation(LinearLayout.VERTICAL);
 
-        chatHeadUp = generateChatHead(new Rect(564, 14, 1060, 756));
-        chatHeadDown = generateChatHead(new Rect(27, 16, 520, 761));
+        chatHeadUp = generateChatHead(new Rect(563, 19, 1065, 760), new Rect(15, 1160, 517, 1896));
+        chatHeadDown = generateChatHead(new Rect(23, 19, 525, 760), new Rect(555, 1160, 1057, 1901));
 
         container.addView(chatHeadUp);
         container.addView(chatHeadDown);
@@ -59,7 +61,7 @@ public class ScreenShotService extends Service {
         windowManager.addView(container, params);
     }
 
-    private ImageView generateChatHead(final Rect rect) {
+    private ImageView generateChatHead(final Rect rect90, final Rect rect270) {
         final ImageView chatHead = new ImageView(this);
         chatHead.setImageResource(R.mipmap.ic_launcher);
 
@@ -88,7 +90,12 @@ public class ScreenShotService extends Service {
                         return true;
                     case MotionEvent.ACTION_UP:
                         if (lastEvent != MotionEvent.ACTION_MOVE) {
-                            postProcessScreenShot(takeScreenShot(), rect);
+                            int rotation = windowManager.getDefaultDisplay().getRotation();
+                            if (rotation == Surface.ROTATION_90) {
+                                postProcessScreenShot(takeScreenShot(), rect90, 270);
+                            } else if (rotation == Surface.ROTATION_270) {
+                                postProcessScreenShot(takeScreenShot(), rect270, 90);
+                            }
                         }
 
                         lastEvent = MotionEvent.ACTION_UP;
@@ -130,9 +137,12 @@ public class ScreenShotService extends Service {
         return null;
     }
 
-    private void postProcessScreenShot(String path, Rect rect) {
+    private void postProcessScreenShot(String path, Rect rect, int rotate) {
         Bitmap bMap = BitmapFactory.decodeFile(path);
-        Bitmap cropped = Bitmap.createBitmap(bMap, rect.left, rect.top, rect.width(), rect.height());
+
+        Matrix matrix = new Matrix();
+        matrix.postRotate(rotate);
+        Bitmap cropped = Bitmap.createBitmap(bMap, rect.left, rect.top, rect.width(), rect.height(), matrix, true);
 
         try (FileOutputStream out = new FileOutputStream(path)) {
             cropped.compress(Bitmap.CompressFormat.PNG, 100, out);

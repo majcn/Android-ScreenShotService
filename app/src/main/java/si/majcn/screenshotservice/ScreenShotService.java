@@ -51,35 +51,22 @@ public class ScreenShotService extends Service {
         mFileObserver.startWatching();
     }
 
+    private Rect getPostProcessScreenShotCropRect() {
+        switch (serviceWidget.getState()) {
+            case UP:
+                return new Rect(19, 15, 760, 517);
+            case DOWN:
+                return new Rect(19, 555, 760, 1057);
+            default:
+                return null;
+        }
+    }
+
     private void postProcessScreenShot(String path) {
-        Rect rect = null;
-        int rotate = 0;
-
-        int rotation = windowManager.getDefaultDisplay().getRotation();
-        if (rotation == Surface.ROTATION_90 && serviceWidget.getState() == ServiceWidget.State.UP) {
-            rect = new Rect(563, 19, 1065, 760);
-            rotate = 270;
-        }
-
-        if (rotation == Surface.ROTATION_90 && serviceWidget.getState() == ServiceWidget.State.DOWN) {
-            rect = new Rect(23, 19, 525, 760);
-            rotate = 270;
-        }
-
-        if (rotation == Surface.ROTATION_270 && serviceWidget.getState() == ServiceWidget.State.UP) {
-            rect = new Rect(15, 1160, 517, 1896);
-            rotate = 90;
-        }
-
-        if (rotation == Surface.ROTATION_270 && serviceWidget.getState() == ServiceWidget.State.DOWN) {
-            rect = new Rect(555, 1160, 1057, 1901);
-            rotate = 90;
-        }
-
+        Rect rect = getPostProcessScreenShotCropRect();
         if (rect == null) {
             return;
         }
-
 
         try {
             Thread.sleep(1000); // TODO: hack - wait 1sec to ensure file is created...
@@ -87,10 +74,7 @@ public class ScreenShotService extends Service {
             e.printStackTrace();
         }
         Bitmap bMap = BitmapFactory.decodeFile(path);
-
-        Matrix matrix = new Matrix();
-        matrix.postRotate(rotate);
-        Bitmap cropped = Bitmap.createBitmap(bMap, rect.left, rect.top, rect.width(), rect.height(), matrix, true);
+        Bitmap cropped = Bitmap.createBitmap(bMap, rect.left, rect.top, rect.width(), rect.height());
 
         try (FileOutputStream out = new FileOutputStream(path)) {
             cropped.compress(Bitmap.CompressFormat.PNG, 100, out);

@@ -27,6 +27,8 @@ public class ScreenShotService extends Service {
 
     private ServiceWidget serviceWidget;
 
+    private FileObserver mFileObserver;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -37,15 +39,16 @@ public class ScreenShotService extends Service {
         serviceWidget = new ServiceWidget(this);
         serviceWidget.init(windowManager);
 
-        final String pathToWatch = Environment.getExternalStorageDirectory().getPath() + "/Pictures/Screenshots";
-        new FileObserver(pathToWatch, FileObserver.CREATE) {
+        final String pathToWatch = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Pictures/Screenshots/";
+        mFileObserver = new FileObserver(pathToWatch, FileObserver.CREATE) {
             @Override
             public void onEvent(int event, final String file) {
                 Log.d(TAG, "File created [" + pathToWatch + file + "]");
 
-                postProcessScreenShot(file);
+                postProcessScreenShot(pathToWatch + file);
             }
-        }.startWatching();
+        };
+        mFileObserver.startWatching();
     }
 
     private void postProcessScreenShot(String path) {
@@ -78,7 +81,11 @@ public class ScreenShotService extends Service {
         }
 
 
-
+        try {
+            Thread.sleep(1000); // TODO: hack - wait 1sec to ensure file is created...
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         Bitmap bMap = BitmapFactory.decodeFile(path);
 
         Matrix matrix = new Matrix();
@@ -102,6 +109,7 @@ public class ScreenShotService extends Service {
         if (serviceWidget != null) {
             windowManager.removeView(serviceWidget); //added at ServiceWidget.init(windowManager);
         }
+        mFileObserver.stopWatching();
     }
 
     @Override

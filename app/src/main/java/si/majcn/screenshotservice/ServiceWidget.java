@@ -69,6 +69,8 @@ public class ServiceWidget extends ImageView {
         params.gravity = Gravity.TOP | Gravity.LEFT;
         params.x = 0;
         params.y = 100;
+        params.width = 200; // TODO: remove when putting other arrow icon
+        params.height = 200; // TODO: remove when putting other arrow icon
 
         setState(State.NONE);
 

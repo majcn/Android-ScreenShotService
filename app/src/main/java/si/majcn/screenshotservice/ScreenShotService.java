@@ -4,14 +4,12 @@ import android.app.Service;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.os.Environment;
 import android.os.FileObserver;
 import android.os.IBinder;
 import android.os.Vibrator;
 import android.util.Log;
-import android.view.Surface;
 import android.view.WindowManager;
 
 import java.io.FileNotFoundException;
